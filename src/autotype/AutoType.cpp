@@ -586,8 +586,63 @@ AutoType::parseActions(const QString& entrySequence, const Entry* entry, QString
                         }
                     }
                 }
+            } else if (placeholder.startsWith("t-conv:")) {
+                placeholder.replace("t-conv:", "");
+                if (!placeholder.isEmpty()) {
+                    auto sep = placeholder[0];
+                    auto parts = placeholder.split(sep);
+                    if (parts.size() >= 3) {
+                        auto resolved = entry->resolveMultiplePlaceholders(parts[1]);
+                        auto type = parts[2].toLower();
+
+                        if (type == "base64") {
+                            resolved = resolved.toUtf8().toBase64();
+                        } else if (type == "hex") {
+                            resolved = resolved.toUtf8().toHex();
+                        } else if (type == "uri") {
+                            resolved = QUrl::toPercentEncoding(resolved.toUtf8());
+                        } else if (type == "uri-dec") {
+                            resolved = QUrl::fromPercentEncoding(resolved.toUtf8());
+                        } else if (type.startsWith("u")) {
+                            resolved = resolved.toUpper();
+                        } else if (type.startsWith("l")) {
+                            resolved = resolved.toLower();
+                        } else if (error) {
+                            *error = tr("Invalid conversion type: %1").arg(type);
+                            continue;
+                        }
+                        for (const QChar& ch : resolved) {
+                            actions << QSharedPointer<AutoTypeKey>::create(ch);
+                        }
+                    } else if (error) {
+                        *error = tr("Invalid conversion syntax: %1").arg(fullPlaceholder);
+                    }
+                } else if (error) {
+                    *error = tr("Invalid conversion syntax: %1").arg(fullPlaceholder);
+                }
+            } else if (placeholder.startsWith("t-replace-rx:")) {
+                placeholder.replace("t-replace-rx:", "");
+                if (!placeholder.isEmpty()) {
+                    auto sep = placeholder[0];
+                    auto parts = placeholder.split(sep);
+                    if (parts.size() >= 4) {
+                        auto resolvedText = entry->resolveMultiplePlaceholders(parts[1]);
+                        auto resolvedSearch = entry->resolveMultiplePlaceholders(parts[2]);
+                        auto resolvedReplace = entry->resolveMultiplePlaceholders(parts[3]);
+                        // Replace $<num> with \<num>s to support Qt substitutions
+                        resolvedReplace.replace(QRegularExpression("\\$(\\d+)"), "\\\\1");
+                        auto resolved = resolvedText.replace(QRegularExpression(resolvedSearch), resolvedReplace);
+                        for (const QChar& ch : resolved) {
+                            actions << QSharedPointer<AutoTypeKey>::create(ch);
+                        }
+                    } else if (error) {
+                        *error = tr("Invalid conversion syntax: %1").arg(fullPlaceholder);
+                    }
+                } else if (error) {
+                    *error = tr("Invalid conversion syntax: %1").arg(fullPlaceholder);
+                }
             } else if (placeholder == "beep" || placeholder.startsWith("vkey")
-                       || placeholder.startsWith("appactivate")) {
+                       || placeholder.startsWith("appactivate") || placeholder.startsWith("c:")) {
                 // Ignore these commands
             } else {
                 // Attempt to resolve an entry attribute
