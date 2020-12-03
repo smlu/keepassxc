@@ -1014,8 +1014,36 @@ bool EditEntryWidget::commitEntry()
     }
 
     // Check Auto-Type validity early
-    if (!AutoType::verifyAutoTypeSyntax(m_autoTypeUi->sequenceEdit->text())) {
-        return false;
+    QString error;
+    if (m_autoTypeUi->customSequenceButton->isChecked()
+        && !AutoType::verifyAutoTypeSyntax(m_autoTypeUi->sequenceEdit->text(), m_entry, error)) {
+        auto res = MessageBox::question(this,
+                                        tr("Auto-Type Syntax Error"),
+                                        tr("The custom Auto-Type sequence failed validation:\n%1\n"
+                                           "Would you like to correct the sequence?")
+                                            .arg(error),
+                                        MessageBox::Yes | MessageBox::No,
+                                        MessageBox::Yes);
+        if (res == MessageBox::Yes) {
+            // TODO: switch to Auto-Type page
+            return false;
+        }
+    }
+    for (const auto& assoc : m_autoTypeAssoc->getAll()) {
+        if (!AutoType::verifyAutoTypeSyntax(assoc.sequence, m_entry, error)) {
+            auto res =
+                MessageBox::question(this,
+                                     tr("Auto-Type Syntax Error"),
+                                     tr("The Auto-Type sequence for window association %1 failed validation:\n%2\n"
+                                        "Would you like to correct the sequence?")
+                                         .arg(assoc.window, error),
+                                     MessageBox::Yes | MessageBox::No,
+                                     MessageBox::Yes);
+            if (res == MessageBox::Yes) {
+                // TODO: switch to Auto-Type page
+                return false;
+            }
+        }
     }
 
     if (m_advancedUi->attributesView->currentIndex().isValid() && m_advancedUi->attributesEdit->isEnabled()) {

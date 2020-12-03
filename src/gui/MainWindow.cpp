@@ -1578,6 +1578,13 @@ void MainWindow::toggleWindow()
     }
 }
 
+void MainWindow::closeModalWindow()
+{
+    if (qApp->modalWindow()) {
+        qApp->modalWindow()->close();
+    }
+}
+
 void MainWindow::lockDatabasesAfterInactivity()
 {
     // ignore event if a modal dialog is open (such as a message box or file dialog)
