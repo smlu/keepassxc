@@ -19,6 +19,8 @@
 #ifndef KEEPASSX_ICONS_H
 #define KEEPASSX_ICONS_H
 
+#include <core/Entry.h>
+
 #include <QColor>
 #include <QHash>
 #include <QIcon>
@@ -34,6 +36,7 @@ public:
     QString trayIconAppearance() const;
     QIcon icon(const QString& name, bool recolor = true, const QColor& overrideColor = QColor::Invalid);
     QIcon onOffIcon(const QString& name, bool recolor = true);
+    QImage getEntryIcon(Entry* entry) const;
 
     static Icons* instance();
 

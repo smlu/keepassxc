@@ -24,6 +24,7 @@
 
 #include "config-keepassx.h"
 #include "core/Config.h"
+#include "core/DatabaseIcons.h" // FIXME move to gui/
 #include "gui/MainWindow.h"
 #include "gui/osutils/OSUtils.h"
 
@@ -159,6 +160,21 @@ QIcon Icons::onOffIcon(const QString& name, bool recolor)
     m_iconCache.insert(cacheName, icon);
 
     return icon;
+}
+
+QImage Icons::getEntryIcon(Entry* entry) const
+{
+    if (entry->iconUuid().isNull()) {
+        return databaseIcons()->icon(entry->iconNumber()).toImage();
+    } else {
+        Q_ASSERT(entry->database());
+
+        if (entry->database()) {
+            return entry->database()->metadata()->customIcon(entry->iconUuid());
+        } else {
+            return QImage();
+        }
+    }
 }
 
 Icons::Icons()
