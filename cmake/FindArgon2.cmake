@@ -27,6 +27,8 @@ if(MINGW)
             ${ARGON2_SYS_LIBRARIES} ${CMAKE_BINARY_DIR}/libargon2_patched.a
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
     find_library(ARGON2_LIBRARIES libargon2_patched.a PATHS ${CMAKE_BINARY_DIR} NO_DEFAULT_PATH)
+elseif(MSVC)
+    find_library(ARGON2_LIBRARIES Argon2OptDll.lib)
 else()
     find_library(ARGON2_LIBRARIES argon2)
 endif()
