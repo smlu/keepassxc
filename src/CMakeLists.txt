@@ -209,7 +209,7 @@ if(UNIX AND NOT APPLE)
             gui/osutils/nixutils/NixUtils.cpp
             gui/osutils/nixutils/X11Funcs.cpp)
 endif()
-if(MINGW)
+if(WIN32)
     set(keepassx_SOURCES
             ${keepassx_SOURCES}
             gui/osutils/winutils/ScreenLockListenerWin.cpp
@@ -280,7 +280,7 @@ set(autotype_SOURCES
         autotype/WildcardMatcher.cpp
         autotype/WindowSelectComboBox.cpp)
 
-if(MINGW)
+if(WIN32)
     set(keepassx_SOURCES_MAINEXE ${keepassx_SOURCES_MAINEXE} ${CMAKE_SOURCE_DIR}/share/windows/icon.rc)
 endif()
 
@@ -324,7 +324,7 @@ target_link_libraries(keepassx_core
         Qt5::Concurrent
         Qt5::Network
         Qt5::Widgets
-        ${sodium_LIBRARY_RELEASE}
+        sodium
         ${YUBIKEY_LIBRARIES}
         ${ZXCVBN_LIBRARIES}
         ${ARGON2_LIBRARIES}
@@ -355,11 +355,11 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(keepassx_core Qt5::DBus Qt5::X11Extras X11)
     include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS})
 endif()
-if(MINGW)
+if(WIN32)
     target_link_libraries(keepassx_core Wtsapi32.lib Ws2_32.lib)
 endif()
 
-if(MINGW)
+if(WIN32)
     include(GenerateProductVersion)
     generate_product_version(
             WIN32_ProductVersionFiles
@@ -415,7 +415,7 @@ install(TARGETS ${PROGNAME}
         BUNDLE DESTINATION . COMPONENT Runtime
         RUNTIME DESTINATION ${BIN_INSTALL_DIR} COMPONENT Runtime)
 
-if(MINGW)
+if(WIN32)
     if(${CMAKE_SIZEOF_VOID_P} EQUAL "8")
         set(OUTPUT_FILE_POSTFIX "Win64")
     else()
@@ -492,12 +492,18 @@ if(MINGW)
     install(FILES ${Qt5_PREFIX}/ssl/certs/ca-bundle.crt DESTINATION "ssl/certs")
     # install OpenSSL library
     if(WITH_XC_NETWORKING)
-        find_file(OPENSSL_DLL NAMES libssl-1_1.dll libssl-1_1-x64.dll)
+        find_file(OPENSSL_DLL
+            NAMES libssl-1_1.dll libssl-1_1-x64.dll
+            HINTS "${OPENSSL_ROOT_DIR}/bin"
+        )
         if (NOT OPENSSL_DLL)
             message(FATAL_ERROR "Cannot find libssl dll, ensure openssl is properly installed.")
         endif()
 
-        find_file(CRYPTO_DLL NAMES libcrypto-1_1.dll libcrypto-1_1-x64.dll)
+        find_file(CRYPTO_DLL
+            NAMES libcrypto-1_1.dll libcrypto-1_1-x64.dll
+            HINTS ""${OPENSSL_ROOT_DIR}/bin""
+        )
         if (NOT CRYPTO_DLL)
             message(FATAL_ERROR "Cannot find libcrypto dll, ensure libgcrypt is properly installed.")
         endif()

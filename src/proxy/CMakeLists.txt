@@ -21,7 +21,7 @@ if(WITH_XC_BROWSER)
 
     # Alloc must be defined in a static library to prevent clashing with clang ASAN definitions
     add_library(proxy_alloc STATIC ../core/Alloc.cpp)
-    target_link_libraries(proxy_alloc PRIVATE Qt5::Core ${sodium_LIBRARY_RELEASE})
+    target_link_libraries(proxy_alloc PRIVATE Qt5::Core sodium)
 
     add_executable(keepassxc-proxy ${proxy_SOURCES})
     target_link_libraries(keepassxc-proxy proxy_alloc Qt5::Core Qt5::Network)
@@ -54,7 +54,7 @@ if(WITH_XC_BROWSER)
                            COMMENT "Copying keepassxc-proxy inside the application")
     endif()
 
-    if(MINGW)
+    if(WIN32)
       target_link_libraries(keepassxc-proxy Wtsapi32.lib Ws2_32.lib)
     endif()
 endif()
