@@ -25,13 +25,6 @@
 #include <string.h>
 #include <zxcvbn.h>
 
-/* For pre-compiled headers under windows */
-#ifdef _WIN32
-#ifndef __MINGW32__
-#include "stdafx.h"
-#endif
-#endif
-
 const QCommandLineOption Estimate::AdvancedOption =
     QCommandLineOption(QStringList() << "a"
                                      << "advanced",
