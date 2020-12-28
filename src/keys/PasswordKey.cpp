@@ -64,7 +64,7 @@ void PasswordKey::setPassword(const QString& password)
 void PasswordKey::setHash(const QByteArray& hash)
 {
     Q_ASSERT(hash.size() == SHA256_SIZE);
-    std::memcpy(m_key, hash.data(), std::min(SHA256_SIZE, hash.size()));
+    std::memcpy(m_key, hash.data(), std::min<int>(SHA256_SIZE, hash.size()));
     m_isInitialized = true;
 }
 
