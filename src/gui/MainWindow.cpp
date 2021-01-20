@@ -40,6 +40,7 @@
 #include "gui/Icons.h"
 #include "gui/MessageBox.h"
 #include "gui/SearchWidget.h"
+#include "gui/osutils/OSUtils.h"
 #include "keys/CompositeKey.h"
 #include "keys/FileKey.h"
 #include "keys/PasswordKey.h"
@@ -503,6 +504,8 @@ MainWindow::MainWindow()
     connect(m_ui->actionOnlineHelp, SIGNAL(triggered()), SLOT(openOnlineHelp()));
     connect(m_ui->actionKeyboardShortcuts, SIGNAL(triggered()), SLOT(openKeyboardShortcuts()));
 
+    connect(osUtils, &OSUtilsBase::statusbarThemeChanged, this, &MainWindow::updateTrayIcon);
+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     // Install event filter for empty-area drag
     auto* eventFilter = new MainWindowEventFilter(this);
@@ -532,6 +535,11 @@ MainWindow::MainWindow()
 #ifndef WITH_XC_NETWORKING
     m_ui->actionGroupDownloadFavicons->setVisible(false);
     m_ui->actionEntryDownloadIcon->setVisible(false);
+#endif
+#ifndef WITH_XC_DOCS
+    m_ui->actionGettingStarted->setVisible(false);
+    m_ui->actionUserGuide->setVisible(false);
+    m_ui->actionKeyboardShortcuts->setVisible(false);
 #endif
 
     // clang-format off
@@ -599,10 +607,10 @@ MainWindow::MainWindow()
     }
 #endif
 
-    QObject::connect(qApp, SIGNAL(anotherInstanceStarted()), this, SLOT(bringToFront()));
-    QObject::connect(qApp, SIGNAL(applicationActivated()), this, SLOT(bringToFront()));
-    QObject::connect(qApp, SIGNAL(openFile(QString)), this, SLOT(openDatabase(QString)));
-    QObject::connect(qApp, SIGNAL(quitSignalReceived()), this, SLOT(appExit()), Qt::DirectConnection);
+    connect(qApp, SIGNAL(anotherInstanceStarted()), this, SLOT(bringToFront()));
+    connect(qApp, SIGNAL(applicationActivated()), this, SLOT(bringToFront()));
+    connect(qApp, SIGNAL(openFile(QString)), this, SLOT(openDatabase(QString)));
+    connect(qApp, SIGNAL(quitSignalReceived()), this, SLOT(appExit()), Qt::DirectConnection);
 
     restoreConfigState();
 }
@@ -790,7 +798,9 @@ void MainWindow::setMenuActionState(DatabaseWidget::Mode mode)
             m_ui->actionGroupSortDesc->setEnabled(groupSelected && currentGroupHasChildren);
             m_ui->actionGroupEmptyRecycleBin->setVisible(recycleBinSelected);
             m_ui->actionGroupEmptyRecycleBin->setEnabled(recycleBinSelected);
+#ifdef WITH_XC_NETWORKING
             m_ui->actionGroupDownloadFavicons->setVisible(!recycleBinSelected);
+#endif
             m_ui->actionGroupDownloadFavicons->setEnabled(groupSelected && currentGroupHasEntries
                                                           && !recycleBinSelected);
             m_ui->actionDatabaseSecurity->setEnabled(true);
@@ -1576,11 +1586,6 @@ void MainWindow::toggleWindow()
 
 void MainWindow::lockDatabasesAfterInactivity()
 {
-    // ignore event if a modal dialog is open (such as a message box or file dialog)
-    if (QApplication::activeModalWidget()) {
-        return;
-    }
-
     m_ui->tabWidget->lockDatabases();
 }
 
@@ -1757,8 +1762,10 @@ void MainWindow::initViewMenu()
 
     connect(themeActions, &QActionGroup::triggered, this, [this, theme](QAction* action) {
         config()->set(Config::GUI_ApplicationTheme, action->data());
-        if (action->data() != theme) {
+        if ((action->data() == "classic" || theme == "classic") && action->data() != theme) {
             restartApp(tr("You must restart the application to apply this setting. Would you like to restart now?"));
+        } else {
+            kpxcApp->applyTheme();
         }
     });
 
