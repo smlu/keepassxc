@@ -30,7 +30,6 @@
 
 #ifdef Q_OS_WIN
 #include <fcntl.h>
-#include <winsock2.h>
 #define NOMINMAX
 #include <windows.h>
 #else
