@@ -32,6 +32,9 @@ PasswordEditWidget::PasswordEditWidget(QWidget* parent)
     setComponentName(tr("Password"));
     setComponentDescription(tr("<p>A password is the primary method for securing your database.</p>"
                                "<p>Good passwords are long and unique. KeePassXC can generate one for you.</p>"));
+
+    m_checkOsStoreKey = new QCheckBox(this);
+    this->findChild<QWidget*>("changeOrRemovePage")->layout()->addWidget(m_checkOsStoreKey);
 }
 
 PasswordEditWidget::~PasswordEditWidget()
