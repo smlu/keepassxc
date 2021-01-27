@@ -69,14 +69,6 @@ DatabaseSettingsWidgetDatabaseKey::DatabaseSettingsWidgetDatabaseKey(QWidget* pa
 
     vbox->addStretch();
     setLayout(vbox);
-
-    m_passwordEditWidget->osStoreKey()->setVisible(false);
-#ifdef WITH_XC_WINDOWSHELLO
-    if (WindowsHello::isAvailable()) {
-        m_passwordEditWidget->osStoreKey()->setVisible(true);
-        m_passwordEditWidget->osStoreKey()->setText(tr("Use Windows Hello to store and retrieve database password"));
-    }
-#endif
 }
 
 DatabaseSettingsWidgetDatabaseKey::~DatabaseSettingsWidgetDatabaseKey()
