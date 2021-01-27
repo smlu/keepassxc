@@ -334,7 +334,6 @@ QByteArray WinHelloKeyManager::getKey(QStringView name) const
 
 bool WinHelloKeyManager::contains(QStringView name)
 {
-
     PCREDENTIALW pCred;
     bool hasKey = CredReadW(getCredTargetName(name).data(), CRED_TYPE_GENERIC, 0, &pCred);
     CredFree(pCred);
