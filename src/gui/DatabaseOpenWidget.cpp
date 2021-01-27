@@ -81,7 +81,7 @@ DatabaseOpenWidget::DatabaseOpenWidget(QWidget* parent)
     connect(m_ui->keyFileLabelHelp, SIGNAL(clicked(bool)), SLOT(openKeyFileHelp()));
 
     m_ui->buttonWinHelloUnlock->setVisible(false);
-    m_ui->buttonWinHelloUnlock->setIcon(icons()->icon("winhello").pixmap(QSize(32, 32)));
+    m_ui->buttonWinHelloUnlock->setIcon(icons()->icon("winhello"));
     connect(m_ui->buttonWinHelloUnlock, SIGNAL(clicked()), SLOT(openDatabase()));
 
 #ifdef WITH_XC_YUBIKEY
@@ -304,7 +304,9 @@ QSharedPointer<CompositeKey> DatabaseOpenWidget::buildDatabaseKey()
     }
 
 #ifdef WITH_XC_WINDOWSHELLO
-    if (WindowsHello::isAvailable() && m_ui->editPassword->text().isEmpty()) {
+    if (WindowsHello::isAvailable()
+        && WindowsHello::containsKey(m_filename)
+        && m_ui->editPassword->text().isEmpty()) {
         // clear empty password from composite key
         databaseKey->clear();
 

@@ -69,14 +69,6 @@ DatabaseSettingsWidgetDatabaseKey::DatabaseSettingsWidgetDatabaseKey(QWidget* pa
 
     vbox->addStretch();
     setLayout(vbox);
-
-    m_passwordEditWidget->osStoreKey()->setVisible(false);
-#ifdef WITH_XC_WINDOWSHELLO
-    if (WindowsHello::isAvailable()) {
-        m_passwordEditWidget->osStoreKey()->setVisible(true);
-        m_passwordEditWidget->osStoreKey()->setText(tr("Use Windows Hello to store and retrieve database password"));
-    }
-#endif
 }
 
 DatabaseSettingsWidgetDatabaseKey::~DatabaseSettingsWidgetDatabaseKey()
@@ -98,7 +90,8 @@ void DatabaseSettingsWidgetDatabaseKey::load(QSharedPointer<Database> db)
         if (key->uuid() == PasswordKey::UUID) {
             m_passwordEditWidget->setComponentAdded(true);
 #ifdef WITH_XC_WINDOWSHELLO
-            if (WindowsHello::containsKey(db->filePath())) {
+            if (WindowsHello::isAvailable()
+                && WindowsHello::containsKey(db->filePath())) {
                 m_passwordEditWidget->osStoreKey()->setChecked(true);
             }
             else {
@@ -235,15 +228,18 @@ void DatabaseSettingsWidgetDatabaseKey::updateOsStore()
 {
 #ifdef WITH_XC_WINDOWSHELLO
     if (WindowsHello::isAvailable()) {
-        if (m_passwordEditWidget->osStoreKey()->isChecked()) {
-            for (const auto& key : m_db->key()->keys()) {
-                if (key->uuid() == PasswordKey::UUID) {
-                    WindowsHello(this).storeKey(m_db->filePath(), key->rawKey());
-                    break;
+        const bool pwdStored = [this]() {
+            if (m_passwordEditWidget->osStoreKey()->isChecked()) {
+                for (const auto& key : m_db->key()->keys()) {
+                    if (key->uuid() == PasswordKey::UUID) {
+                        return WindowsHello(this)
+                            .storeKey(m_db->filePath(), key->rawKey());
+                    }
                 }
             }
-        }
-        else {
+            return false;
+        }();
+        if (!pwdStored) { // Remove, any stored password key for DB
             WindowsHello(this).removeKey(m_db->filePath());
         }
     }
