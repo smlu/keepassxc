@@ -72,7 +72,7 @@ DatabaseOpenWidget::DatabaseOpenWidget(QWidget* parent)
     connect(m_ui->buttonBrowseFile, SIGNAL(clicked()), SLOT(browseKeyFile()));
 
     m_ui->buttonBox->button(QDialogButtonBox::Ok)->setText(tr("Unlock"));
-    connect(m_ui->buttonBox, SIGNAL(accepted()), SLOT(openDatabase()));
+    connect(m_ui->buttonBox, &QDialogButtonBox::accepted, [this](){ openDatabase(); });
     connect(m_ui->buttonBox, SIGNAL(rejected()), SLOT(reject()));
 
     m_ui->hardwareKeyLabelHelp->setIcon(icons()->icon("system-help").pixmap(QSize(12, 12)));
@@ -82,7 +82,7 @@ DatabaseOpenWidget::DatabaseOpenWidget(QWidget* parent)
 
     m_ui->buttonWinHelloUnlock->setVisible(false);
     m_ui->buttonWinHelloUnlock->setIcon(icons()->icon("winhello"));
-    connect(m_ui->buttonWinHelloUnlock, SIGNAL(clicked()), SLOT(openDatabase()));
+    connect(m_ui->buttonWinHelloUnlock, &QPushButton::clicked, [this](){ openDatabase(/*useOsStoredKey=*/true); });
 
 #ifdef WITH_XC_YUBIKEY
     m_ui->hardwareKeyProgress->setVisible(false);
@@ -205,11 +205,11 @@ void DatabaseOpenWidget::enterKey(const QString& pw, const QString& keyFile)
     openDatabase();
 }
 
-void DatabaseOpenWidget::openDatabase()
+void DatabaseOpenWidget::openDatabase(bool useOsStoredKey)
 {
     m_ui->messageWidget->hide();
 
-    QSharedPointer<CompositeKey> databaseKey = buildDatabaseKey();
+    QSharedPointer<CompositeKey> databaseKey = buildDatabaseKey(useOsStoredKey);
     if (!databaseKey) {
         return;
     }
@@ -282,7 +282,11 @@ void DatabaseOpenWidget::openDatabase()
         m_ui->editPassword->setFocus();
 
 #ifdef WITH_XC_WINDOWSHELLO
-        if(WindowsHello::isAvailable() && m_ui->editPassword->text().isEmpty()) {
+        if(useOsStoredKey
+            && WindowsHello::isAvailable()
+            && m_ui->editPassword->text().isEmpty()) {
+            // FIX: This is bug, if the wrong key file was used
+
             // User probably tried to open DB with Windows Hello.
             // We assume stored DB key is not valid anymore, so let's remove it from store.
             WindowsHello(this).removeKey(m_filename);
@@ -295,7 +299,7 @@ void DatabaseOpenWidget::openDatabase()
     }
 }
 
-QSharedPointer<CompositeKey> DatabaseOpenWidget::buildDatabaseKey()
+QSharedPointer<CompositeKey> DatabaseOpenWidget::buildDatabaseKey(bool useOsStoredKey)
 {
     auto databaseKey = QSharedPointer<CompositeKey>::create();
 
@@ -304,7 +308,8 @@ QSharedPointer<CompositeKey> DatabaseOpenWidget::buildDatabaseKey()
     }
 
 #ifdef WITH_XC_WINDOWSHELLO
-    if (WindowsHello::isAvailable()
+    if (useOsStoredKey
+        && WindowsHello::isAvailable()
         && WindowsHello::containsKey(m_filename)
         && m_ui->editPassword->text().isEmpty()) {
         // clear empty password from composite key
