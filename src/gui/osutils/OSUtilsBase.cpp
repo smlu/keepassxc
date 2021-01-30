@@ -25,3 +25,13 @@ OSUtilsBase::OSUtilsBase(QObject* parent)
 OSUtilsBase::~OSUtilsBase()
 {
 }
+
+bool OSUtilsBase::allowScreenCapture() const
+{
+    return m_allowScreenCapture;
+}
+
+void OSUtilsBase::setAllowScreenCapture(bool allowScreenCapture)
+{
+    m_allowScreenCapture = allowScreenCapture;
+}
