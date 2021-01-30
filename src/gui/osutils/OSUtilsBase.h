@@ -63,6 +63,10 @@ public:
                                         QString* error = nullptr) = 0;
     virtual bool unregisterGlobalShortcut(const QString& name) = 0;
 
+    virtual bool canPreventScreenCapture() const = 0;
+    virtual bool allowScreenCapture() const;
+    virtual void setAllowScreenCapture(bool allowScreenCapture);
+
 signals:
     void globalShortcutTriggered(const QString& name);
 
@@ -79,6 +83,9 @@ signals:
 protected:
     explicit OSUtilsBase(QObject* parent = nullptr);
     virtual ~OSUtilsBase();
+
+private:
+    bool m_allowScreenCapture = false;
 };
 
 #endif // KEEPASSXC_OSUTILSBASE_H

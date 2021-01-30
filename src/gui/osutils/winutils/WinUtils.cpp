@@ -18,12 +18,29 @@
 #include "WinUtils.h"
 #include <QAbstractNativeEventFilter>
 #include <QApplication>
+#include <QDebug>
 #include <QDir>
 #include <QSettings>
 
-#include <windows.h>
-
 QPointer<WinUtils> WinUtils::m_instance = nullptr;
+
+/**
+ *  Adds " [Screen Capture Allowed]" text to window title
+ * @param hwnd - handle of the window to update the title for
+ * @param title - current window title
+ * @return true if updated else false
+ */
+bool updateTitleWithSCAllowed(HWND hwnd, QString title) {
+    static const auto postfix = QObject::tr(" [Screen Capture Allowed]", "WinUtils");
+    if (not title.contains(postfix)) {
+        title.append(postfix);
+        if (SetWindowTextW(hwnd, (LPCWSTR)title.utf16())) {
+            return true;
+        }
+        qCritical().nospace() << "SetWindowTextW failed. error_code: 0x" << hex << GetLastError();
+    }
+    return false;
+}
 
 WinUtils* WinUtils::instance()
 {
@@ -78,6 +95,41 @@ bool WinUtils::nativeEventFilter(const QByteArray& eventType, void* message, lon
         break;
     case WM_HOTKEY:
         triggerGlobalShortcut(msg->wParam);
+        break;
+    case WM_NCCREATE:
+    case WM_ENTERIDLE: // modal dialog box i.e.: save file dialog
+        if (not allowScreenCapture()) {
+            if (msg->message != WM_ENTERIDLE || DWORD(msg->wParam) == MSGF_DIALOGBOX) {
+                HWND hwnd = msg->message == WM_ENTERIDLE ? (HWND)msg->lParam : msg->hwnd;
+                if (not SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)) {
+                    qCritical().nospace() << "Couldn't set WDA_EXCLUDEFROMCAPTURE display affinity flag to window. error_code: 0x"
+                                          << hex << GetLastError();
+                    if (msg->message == WM_ENTERIDLE) {
+                        // Appened warning to modal dialog title
+                        QString title(256, 0);
+                        int size = GetWindowTextW(hwnd, (LPWSTR)title.data(),title.size()); // Note: size == 0 could indicate error
+                        title.resize(size);
+                        updateTitleWithSCAllowed(hwnd, std::move(title));
+                    }
+                }
+            }
+        }
+        break;
+    case WM_SETTEXT:
+        if (not allowScreenCapture()) {
+            // Check window has set display affinity flag WDA_EXCLUDEFROMCAPTURE
+            DWORD dwAffinity = 0;
+            if (!GetWindowDisplayAffinity(msg->hwnd, &dwAffinity)) {
+                qCritical().nospace() << "GetWindowDisplayAffinity failed. error_code: 0x"
+                                      << hex << GetLastError();
+                break;
+            }
+            if (dwAffinity != WDA_MONITOR && dwAffinity != WDA_EXCLUDEFROMCAPTURE) {
+                auto title = QString::fromUtf16((const char16_t*)msg->lParam);
+                return updateTitleWithSCAllowed(msg->hwnd, std::move(title)); // has to return true if title was changed,
+                                                                              // otherwise WM_SETTEXT will be handled by the caller
+            }
+        }
         break;
     }
 
@@ -439,4 +491,9 @@ DWORD WinUtils::qtToNativeModifiers(Qt::KeyboardModifiers modifiers)
     }
 
     return nativeModifiers;
+}
+
+bool WinUtils::canPreventScreenCapture() const
+{
+    return true;
 }
