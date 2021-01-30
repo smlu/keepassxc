@@ -607,6 +607,34 @@ MainWindow::MainWindow()
     }
 #endif
 
+    if(osUtils->canPreventScreenCapture()) {
+        if(osUtils->allowScreenCapture()
+            && not m_ui->globalMessageWidget->text().isEmpty()) {
+            m_ui->globalMessageWidget->hideMessage();
+            m_ui->globalMessageWidget->showMessage(
+                m_ui->globalMessageWidget->text(),
+                m_ui->globalMessageWidget->messageType()
+            );
+        }
+        connect(m_ui->globalMessageWidget, &MessageWidget::hideAnimationFinished, [this](){
+            if (osUtils->allowScreenCapture()) {
+                m_ui->globalMessageWidget->showMessage(
+                    tr("WARNING: Application screen capture is allowed!\n"),
+                    MessageWidget::Warning,
+                    -1
+                );
+            }
+        });
+        connect(this, &MainWindow::windowTitleChanged, [this](const QString& title){
+            if (osUtils->allowScreenCapture()) {
+                static const auto postfix = tr(" [Screen Capture Allowed]", "MainWindow");
+                if (!title.contains(postfix)) {
+                    setWindowTitle(title + postfix);
+                }
+            }
+        });
+    }
+
     connect(qApp, SIGNAL(anotherInstanceStarted()), this, SLOT(bringToFront()));
     connect(qApp, SIGNAL(applicationActivated()), this, SLOT(bringToFront()));
     connect(qApp, SIGNAL(openFile(QString)), this, SLOT(openDatabase(QString)));

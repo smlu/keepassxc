@@ -28,6 +28,7 @@
 #include "gui/Application.h"
 #include "gui/MainWindow.h"
 #include "gui/MessageBox.h"
+#include "gui/osutils/OSUtils.h"
 
 #if defined(WITH_ASAN) && defined(WITH_LSAN)
 #include <sanitizer/lsan_interface.h>
@@ -65,6 +66,7 @@ int main(int argc, char** argv)
         "localconfig", QObject::tr("path to a custom local config file"), "localconfig");
     QCommandLineOption keyfileOption("keyfile", QObject::tr("key file of the database"), "keyfile");
     QCommandLineOption pwstdinOption("pw-stdin", QObject::tr("read password of the database from stdin"));
+    QCommandLineOption allowScreenCaptureOption("allow-screencapture", QObject::tr("allow app screen recordering and screenshots"));
 
     QCommandLineOption helpOption = parser.addHelpOption();
     QCommandLineOption versionOption = parser.addVersionOption();
@@ -74,6 +76,10 @@ int main(int argc, char** argv)
     parser.addOption(keyfileOption);
     parser.addOption(pwstdinOption);
     parser.addOption(debugInfoOption);
+
+    if(osUtils->canPreventScreenCapture()) {
+        parser.addOption(allowScreenCaptureOption);
+    }
 
     Application app(argc, argv);
     // don't set organizationName as that changes the return value of
@@ -102,6 +108,11 @@ int main(int argc, char** argv)
         }
         qWarning() << QObject::tr("Another instance of KeePassXC is already running.").toUtf8().constData();
         return EXIT_SUCCESS;
+    }
+
+    // Allows screen capture
+    if(osUtils->canPreventScreenCapture()) {
+        osUtils->setAllowScreenCapture(parser.isSet(allowScreenCaptureOption));
     }
 
     // Apply the configured theme before creating any GUI elements

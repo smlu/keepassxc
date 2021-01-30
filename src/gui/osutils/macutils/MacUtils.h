@@ -62,6 +62,11 @@ public:
     uint16 qtToNativeKeyCode(Qt::Key key);
     CGEventFlags qtToNativeModifiers(Qt::KeyboardModifiers modifiers, bool native);
 
+    bool canPreventScreenCapture() const override
+    {
+        return false;
+    }
+
 signals:
     void lockDatabases();
 
