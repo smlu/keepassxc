@@ -29,6 +29,24 @@
 
 QPointer<WinUtils> WinUtils::m_instance = nullptr;
 
+/**
+ *  Adds " [Screen Capture Allowed]" text to window title
+ * @param hwnd - handle of the window to update the title for
+ * @param title - current window title
+ * @return true if updated else false
+ */
+bool updateTitleWithSCAllowed(HWND hwnd, QString title) {
+    static const auto postfix = QObject::tr(" [Screen Capture Allowed]", "WinUtils");
+    if (not title.contains(postfix)) {
+        title.append(postfix);
+        if (SetWindowTextW(hwnd, (LPCWSTR)title.utf16())) {
+            return true;
+        }
+        qCritical().nospace() << "SetWindowTextW failed. error_code: 0x" << hex << GetLastError();
+    }
+    return false;
+}
+
 WinUtils* WinUtils::instance()
 {
     if (!m_instance) {
