@@ -66,7 +66,8 @@ int main(int argc, char** argv)
         "localconfig", QObject::tr("path to a custom local config file"), "localconfig");
     QCommandLineOption keyfileOption("keyfile", QObject::tr("key file of the database"), "keyfile");
     QCommandLineOption pwstdinOption("pw-stdin", QObject::tr("read password of the database from stdin"));
-    QCommandLineOption allowScreenCaptureOption("allow-screencapture", QObject::tr("allow app screen recordering and screenshots"));
+    QCommandLineOption allowScreenCaptureOption("allow-screencapture",
+                                                QObject::tr("allow app screen recordering and screenshots"));
 
     QCommandLineOption helpOption = parser.addHelpOption();
     QCommandLineOption versionOption = parser.addVersionOption();
@@ -77,7 +78,7 @@ int main(int argc, char** argv)
     parser.addOption(pwstdinOption);
     parser.addOption(debugInfoOption);
 
-    if(osUtils->canPreventScreenCapture()) {
+    if (osUtils->canPreventScreenCapture()) {
         parser.addOption(allowScreenCaptureOption);
     }
 
@@ -111,7 +112,7 @@ int main(int argc, char** argv)
     }
 
     // Allows screen capture
-    if(osUtils->canPreventScreenCapture()) {
+    if (osUtils->canPreventScreenCapture()) {
         osUtils->setAllowScreenCapture(parser.isSet(allowScreenCaptureOption));
     }
 
